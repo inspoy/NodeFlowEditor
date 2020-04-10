@@ -1,11 +1,3 @@
-/**
- * == CoolStuff_2019.1 ==
- * Assembly: Assembly-CSharp-Editor
- * FileName: Node.cs
- * Created on 2020/04/09 by chengyongtan
- * All rights reserved.
- */
-
 using UnityEngine;
 
 namespace Instech.NodeEditor

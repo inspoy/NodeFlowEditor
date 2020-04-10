@@ -1,0 +1,11 @@
+{
+  "name": "cc.inspoy.nodeeditor",
+  "displayName": "Instech.NodeEditor",
+  "version": "0.0.1",
+  "unity": "2019.1",
+  "description": "A node-based editor",
+  "keywords": [
+    "instech",
+    "nodeeditor"
+  ]
+}

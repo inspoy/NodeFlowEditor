@@ -7,6 +7,7 @@ namespace Instech.NodeEditor
     public class NodeEditorWindow : EditorWindow
     {
         private readonly List<Node> _nodes = new List<Node>();
+        private readonly List<ConnectionLine> _connectionLines = new List<ConnectionLine>();
 
         [MenuItem(Constants.MenuItemOpenWindow)]
         private static void OpenWindow()
@@ -18,6 +19,7 @@ namespace Instech.NodeEditor
         private void OnGUI()
         {
             DrawNodes();
+            DrawConnectionLines();
             ProcessNodeEvents(Event.current);
             ProcessEvents(Event.current);
             if (GUI.changed)
@@ -34,6 +36,14 @@ namespace Instech.NodeEditor
             }
         }
 
+        private void DrawConnectionLines()
+        {
+            foreach (var line in _connectionLines)
+            {
+                line.Draw();
+            }
+        }
+
         private void ProcessNodeEvents(Event e)
         {
             foreach (var node in _nodes)
@@ -45,7 +55,7 @@ namespace Instech.NodeEditor
                 }
             }
         }
-        
+
         private void ProcessEvents(Event e)
         {
             switch (e.type)
@@ -64,7 +74,7 @@ namespace Instech.NodeEditor
         private void ShowContextMenu(Vector2 pos)
         {
             var genericMenu = new GenericMenu();
-            genericMenu.AddItem(new GUIContent(Constants.EditorWindowContextAddNode), false, () => OnClickAddNode(pos)); 
+            genericMenu.AddItem(new GUIContent(Constants.EditorWindowContextAddNode), false, () => OnClickAddNode(pos));
             genericMenu.ShowAsContext();
         }
 

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Instech.NodeEditor
@@ -11,10 +13,48 @@ namespace Instech.NodeEditor
 
         private Rect _rect;
         private bool _isDragging;
+        private readonly List<NodePort> _inPorts;
+        private readonly List<NodePort> _outPorts;
 
         public Node(Vector2 position, Vector2 size)
         {
             _rect = new Rect(position, size);
+            _inPorts = new List<NodePort>
+            {
+                new NodePort(this, NodePortType.In)
+            };
+            _outPorts = new List<NodePort>
+            {
+                new NodePort(this, NodePortType.Out)
+            };
+        }
+
+        public Vector2 GetPortPosition(NodePort port)
+        {
+            for (var i = 0; i < _inPorts.Count; i++)
+            {
+                var item = _inPorts[i];
+                if (item == port)
+                {
+                    return new Vector2(_rect.x, _rect.y + _rect.height - 25 * (i + 1));
+                }
+            }
+
+            for (var i = 0; i < _outPorts.Count; i++)
+            {
+                var item = _outPorts[i];
+                if (item == port)
+                {
+                    return new Vector2(_rect.x + _rect.width, _rect.y + _rect.height - 25 * (i + 1));
+                }
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(port), "Port is not bound to this node.");
+        }
+
+        public void OnPortClick(NodePort port)
+        {
+            
         }
 
         public void Drag(Vector2 delta)
@@ -24,6 +64,14 @@ namespace Instech.NodeEditor
 
         public void Draw()
         {
+            foreach (var item in _inPorts)
+            {
+                item.Draw();
+            }
+            foreach (var item in _outPorts)
+            {
+                item.Draw();
+            }
             GUI.Box(_rect, Title);
         }
 

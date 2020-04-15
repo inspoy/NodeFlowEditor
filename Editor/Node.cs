@@ -13,6 +13,7 @@ namespace Instech.NodeEditor
 
         private Rect _rect;
         private bool _isDragging;
+        private bool _isSelected;
         private readonly List<NodePort> _inPorts;
         private readonly List<Action<NodePort>> _inPortCallbacks;
         private readonly List<NodePort> _outPorts;
@@ -94,11 +95,13 @@ namespace Instech.NodeEditor
             {
                 item.Draw();
             }
+
             foreach (var item in _outPorts)
             {
                 item.Draw();
             }
-            GUI.Box(_rect, Title);
+
+            GUI.Box(_rect, Title + (_isSelected ? "(Selected)" : string.Empty));
         }
 
         public bool ProcessEvents(Event e)
@@ -111,10 +114,12 @@ namespace Instech.NodeEditor
                         if (_rect.Contains(e.mousePosition))
                         {
                             _isDragging = true;
+                            _isSelected = true;
                             GUI.changed = true;
                         }
                         else
                         {
+                            _isSelected = false;
                             GUI.changed = true;
                         }
                     }

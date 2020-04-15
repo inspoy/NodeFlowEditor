@@ -7,22 +7,23 @@ namespace Instech.NodeEditor
     public class NodeEditorWindow : EditorWindow
     {
         private readonly List<Node> _nodes = new List<Node>();
+        private readonly List<Node> _nodesToRemove = new List<Node>();
         private readonly List<ConnectionLine> _connectionLines = new List<ConnectionLine>();
         private readonly List<ConnectionLine> _linesToRemove = new List<ConnectionLine>();
         private NodePort _curSelectedPort;
 
-        [MenuItem(Constants.MenuItemOpenWindow)]
+        [MenuItem(Strings.MenuItemOpenWindow)]
         private static void OpenWindow()
         {
-            var window = GetWindow<NodeEditorWindow>(Constants.EditorWindowTitle);
-            window.titleContent = new GUIContent(Constants.EditorWindowTitle);
+            var window = GetWindow<NodeEditorWindow>(Strings.EditorWindowTitle);
+            window.titleContent = new GUIContent(Strings.EditorWindowTitle);
         }
 
         private void OnGUI()
         {
             DrawNodes();
             DrawConnectionLines();
-            ProcessRemoveLines();
+            ProcessRemovement();
             ProcessNodeEvents(Event.current);
             ProcessEvents(Event.current);
             if (GUI.changed)
@@ -47,12 +48,19 @@ namespace Instech.NodeEditor
             }
         }
 
-        private void ProcessRemoveLines()
+        private void ProcessRemovement()
         {
             foreach (var line in _linesToRemove)
             {
                 _connectionLines.Remove(line);
             }
+            _linesToRemove.Clear();
+
+            foreach (var node in _nodesToRemove)
+            {
+                _nodes.Remove(node);
+            }
+            _nodesToRemove.Clear();
         }
 
         private void ProcessNodeEvents(Event e)
@@ -85,13 +93,13 @@ namespace Instech.NodeEditor
         private void ShowContextMenu(Vector2 pos)
         {
             var genericMenu = new GenericMenu();
-            genericMenu.AddItem(new GUIContent(Constants.EditorWindowContextAddNode), false, () => OnClickAddNode(pos));
+            genericMenu.AddItem(new GUIContent(Strings.EditorWindowContextAddNode), false, () => OnClickAddNode(pos));
             genericMenu.ShowAsContext();
         }
 
         private void OnClickAddNode(Vector2 pos)
         {
-            var node = new Node(pos, new Vector2(200, 50)) { Title = "New Node" };
+            var node = new Node(pos, new Vector2(200, 50), OnClickRemoveNode) { Title = "New Node" };
             node.AddPort(NodePortType.In, OnClickPort);
             node.AddPort(NodePortType.Out, OnClickPort);
             _nodes.Add(node);
@@ -113,11 +121,11 @@ namespace Instech.NodeEditor
                 port.State = NodePort.PortState.Connected;
                 if (port.Type == NodePortType.In)
                 {
-                    _connectionLines.Add(new ConnectionLine(port, _curSelectedPort, OnClickRemoveLine));
+                    _connectionLines.Add(new ConnectionLine(_curSelectedPort, port, OnClickRemoveLine));
                 }
                 else
                 {
-                    _connectionLines.Add(new ConnectionLine(_curSelectedPort, port, OnClickRemoveLine));
+                    _connectionLines.Add(new ConnectionLine(port, _curSelectedPort, OnClickRemoveLine));
                 }
             }
 
@@ -128,6 +136,18 @@ namespace Instech.NodeEditor
         private void OnClickRemoveLine(ConnectionLine line)
         {
             _linesToRemove.Add(line);
+        }
+
+        private void OnClickRemoveNode(Node node)
+        {
+            _nodesToRemove.Add(node);
+            foreach (var line in _connectionLines)
+            {
+                if (node.HasPort(line.FromPort) > 0 || node.HasPort(line.ToPort) < 0)
+                {
+                    _linesToRemove.Add(line);
+                }
+            }
         }
     }
 }

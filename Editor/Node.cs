@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Instech.NodeEditor
@@ -18,14 +19,16 @@ namespace Instech.NodeEditor
         private readonly List<Action<NodePort>> _inPortCallbacks;
         private readonly List<NodePort> _outPorts;
         private readonly List<Action<NodePort>> _outPortCallbacks;
+        private readonly Action<Node> _removeCallback;
 
-        public Node(Vector2 position, Vector2 size)
+        public Node(Vector2 position, Vector2 size, Action<Node> removeNodeCallback)
         {
             _rect = new Rect(position, size);
             _inPorts = new List<NodePort>();
             _inPortCallbacks = new List<Action<NodePort>>();
             _outPorts = new List<NodePort>();
             _outPortCallbacks = new List<Action<NodePort>>();
+            _removeCallback = removeNodeCallback;
         }
 
         public void AddPort(NodePortType type, Action<NodePort> onClick)
@@ -40,6 +43,27 @@ namespace Instech.NodeEditor
                 _outPorts.Add(new NodePort(this, type));
                 _outPortCallbacks.Add(onClick);
             }
+        }
+
+        /// <summary>
+        /// 节点是否拥有指定端口
+        /// </summary>
+        /// <returns>0-不拥有，正数-输出端口序号，负数-输入端口序号</returns>
+        public int HasPort(NodePort port)
+        {
+            var idx = _inPorts.IndexOf(port);
+            if (idx >= 0)
+            {
+                return -idx - 1;
+            }
+
+            idx = _outPorts.IndexOf(port);
+            if (idx >= 0)
+            {
+                return idx + 1;
+            }
+
+            return 0;
         }
 
         public Vector2 GetPortPosition(NodePort port)
@@ -101,7 +125,7 @@ namespace Instech.NodeEditor
                 item.Draw();
             }
 
-            GUI.Box(_rect, Title + (_isSelected ? "(Selected)" : string.Empty));
+            GUI.Box(_rect, Title, _isSelected ? Styles.NodeSelected : Styles.NodeNormal);
         }
 
         public bool ProcessEvents(Event e)
@@ -115,13 +139,19 @@ namespace Instech.NodeEditor
                         {
                             _isDragging = true;
                             _isSelected = true;
-                            GUI.changed = true;
+                            e.Use();
                         }
                         else
                         {
                             _isSelected = false;
-                            GUI.changed = true;
                         }
+
+                        return true;
+                    }
+                    else if (e.button == 1 && _rect.Contains(e.mousePosition))
+                    {
+                        ShowContextMenu();
+                        e.Use();
                     }
 
                     break;
@@ -142,6 +172,18 @@ namespace Instech.NodeEditor
             }
 
             return false;
+        }
+
+        private void ShowContextMenu()
+        {
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent(Strings.EditorWindowNodeRemove), false, OnClickRemoveNode);
+            menu.ShowAsContext();
+        }
+
+        private void OnClickRemoveNode()
+        {
+            _removeCallback?.Invoke(this);
         }
     }
 }

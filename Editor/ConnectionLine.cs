@@ -22,8 +22,8 @@ namespace Instech.NodeEditor
             Handles.DrawBezier(
                 FromPort.Rect.center,
                 ToPort.Rect.center,
-                FromPort.Rect.center + Vector2.left * 50f,
-                ToPort.Rect.center - Vector2.left * 50f,
+                FromPort.Rect.center + Vector2.right * 50f,
+                ToPort.Rect.center + Vector2.left * 50f,
                 Color.white,
                 null,
                 2f

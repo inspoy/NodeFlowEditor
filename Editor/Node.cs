@@ -14,19 +14,31 @@ namespace Instech.NodeEditor
         private Rect _rect;
         private bool _isDragging;
         private readonly List<NodePort> _inPorts;
+        private readonly List<Action<NodePort>> _inPortCallbacks;
         private readonly List<NodePort> _outPorts;
+        private readonly List<Action<NodePort>> _outPortCallbacks;
 
         public Node(Vector2 position, Vector2 size)
         {
             _rect = new Rect(position, size);
-            _inPorts = new List<NodePort>
+            _inPorts = new List<NodePort>();
+            _inPortCallbacks = new List<Action<NodePort>>();
+            _outPorts = new List<NodePort>();
+            _outPortCallbacks = new List<Action<NodePort>>();
+        }
+
+        public void AddPort(NodePortType type, Action<NodePort> onClick)
+        {
+            if (type == NodePortType.In)
             {
-                new NodePort(this, NodePortType.In)
-            };
-            _outPorts = new List<NodePort>
+                _inPorts.Add(new NodePort(this, type));
+                _inPortCallbacks.Add(onClick);
+            }
+            else if (type == NodePortType.Out)
             {
-                new NodePort(this, NodePortType.Out)
-            };
+                _outPorts.Add(new NodePort(this, type));
+                _outPortCallbacks.Add(onClick);
+            }
         }
 
         public Vector2 GetPortPosition(NodePort port)
@@ -45,7 +57,7 @@ namespace Instech.NodeEditor
                 var item = _outPorts[i];
                 if (item == port)
                 {
-                    return new Vector2(_rect.x + _rect.width, _rect.y + _rect.height - 25 * (i + 1));
+                    return new Vector2(_rect.x + _rect.width - 10, _rect.y + _rect.height - 25 * (i + 1));
                 }
             }
 
@@ -54,7 +66,21 @@ namespace Instech.NodeEditor
 
         public void OnPortClick(NodePort port)
         {
-            
+            for (var i = 0; i < _inPorts.Count; ++i)
+            {
+                if (_inPorts[i] == port)
+                {
+                    _inPortCallbacks[i]?.Invoke(port);
+                }
+            }
+
+            for (var i = 0; i < _outPorts.Count; ++i)
+            {
+                if (_outPorts[i] == port)
+                {
+                    _outPortCallbacks[i]?.Invoke(port);
+                }
+            }
         }
 
         public void Drag(Vector2 delta)

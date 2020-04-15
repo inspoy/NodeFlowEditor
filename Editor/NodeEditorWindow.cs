@@ -8,6 +8,8 @@ namespace Instech.NodeEditor
     {
         private readonly List<Node> _nodes = new List<Node>();
         private readonly List<ConnectionLine> _connectionLines = new List<ConnectionLine>();
+        private readonly List<ConnectionLine> _linesToRemove = new List<ConnectionLine>();
+        private NodePort _curSelectedPort;
 
         [MenuItem(Constants.MenuItemOpenWindow)]
         private static void OpenWindow()
@@ -20,6 +22,7 @@ namespace Instech.NodeEditor
         {
             DrawNodes();
             DrawConnectionLines();
+            ProcessRemoveLines();
             ProcessNodeEvents(Event.current);
             ProcessEvents(Event.current);
             if (GUI.changed)
@@ -41,6 +44,14 @@ namespace Instech.NodeEditor
             foreach (var line in _connectionLines)
             {
                 line.Draw();
+            }
+        }
+
+        private void ProcessRemoveLines()
+        {
+            foreach (var line in _linesToRemove)
+            {
+                _connectionLines.Remove(line);
             }
         }
 
@@ -81,7 +92,42 @@ namespace Instech.NodeEditor
         private void OnClickAddNode(Vector2 pos)
         {
             var node = new Node(pos, new Vector2(200, 50)) { Title = "New Node" };
+            node.AddPort(NodePortType.In, OnClickPort);
+            node.AddPort(NodePortType.Out, OnClickPort);
             _nodes.Add(node);
+        }
+
+        private void OnClickPort(NodePort port)
+        {
+            if (_curSelectedPort == null)
+            {
+                _curSelectedPort = port;
+                _curSelectedPort.State = NodePort.PortState.Selected;
+                return;
+            }
+
+            if (port.Type != _curSelectedPort.Type && port.Owner != _curSelectedPort.Owner)
+            {
+                // Connect with two port
+                _curSelectedPort.State = NodePort.PortState.Connected;
+                port.State = NodePort.PortState.Connected;
+                if (port.Type == NodePortType.In)
+                {
+                    _connectionLines.Add(new ConnectionLine(port, _curSelectedPort, OnClickRemoveLine));
+                }
+                else
+                {
+                    _connectionLines.Add(new ConnectionLine(_curSelectedPort, port, OnClickRemoveLine));
+                }
+            }
+
+            _curSelectedPort.State = NodePort.PortState.Idle;
+            _curSelectedPort = null;
+        }
+
+        private void OnClickRemoveLine(ConnectionLine line)
+        {
+            _linesToRemove.Add(line);
         }
     }
 }

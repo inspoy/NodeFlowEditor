@@ -10,25 +10,45 @@ namespace Instech.NodeEditor
 
     public class NodePort
     {
+        public enum PortState
+        {
+            Idle,
+            Selected,
+            Connected
+        }
+
         public Rect Rect { get; private set; }
         public NodePortType Type { get; private set; }
-        private Node _node;
+        public Node Owner { get; private set; }
+        public PortState State { get; set; }
 
-        public NodePort(Node node, NodePortType type)
+        public NodePort(Node owner, NodePortType type)
         {
             Rect = new Rect(0, 0, 10, 10);
-            _node = node;
+            Owner = owner;
             Type = type;
+            State = PortState.Idle;
         }
 
         public void Draw()
         {
             var tmp = Rect;
-            tmp.position = _node.GetPortPosition(this);
+            tmp.position = Owner.GetPortPosition(this);
             Rect = tmp;
-            if (GUI.Button(Rect, ""))
+            var label = "";
+            switch (State)
             {
-                _node.OnPortClick(this);
+                case PortState.Selected:
+                    label = ".";
+                    break;
+                case PortState.Connected:
+                    label = "x";
+                    break;
+            }
+
+            if (GUI.Button(Rect, label))
+            {
+                Owner.OnPortClick(this);
             }
         }
     }

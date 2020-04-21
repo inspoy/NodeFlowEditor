@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace Instech.NodeEditor
         private readonly List<ConnectionLine> _connectionLines = new List<ConnectionLine>();
         private readonly List<ConnectionLine> _linesToRemove = new List<ConnectionLine>();
         private NodePort _curSelectedPort;
-        private bool _isDragging;
+        private Vector2 _dragOffset;
 
         [MenuItem(Strings.MenuItemOpenWindow)]
         private static void OpenWindow()
@@ -22,11 +23,17 @@ namespace Instech.NodeEditor
 
         private void OnGUI()
         {
+            DrawGrid(20, 0.2f);
+            DrawGrid(100, 0.5f);
+
             DrawNodes();
             DrawConnectionLines();
+            DrawConnectionLine(Event.current);
+
             ProcessRemovement();
             ProcessNodeEvents(Event.current);
             ProcessEvents(Event.current);
+
             if (GUI.changed)
             {
                 Repaint();
@@ -47,6 +54,68 @@ namespace Instech.NodeEditor
             {
                 line.Draw();
             }
+        }
+
+        private void DrawConnectionLine(Event e)
+        {
+            if (_curSelectedPort != null)
+            {
+                if (_curSelectedPort.Type == NodePortType.Out)
+                {
+                    Handles.DrawBezier(
+                        _curSelectedPort.Rect.center,
+                        e.mousePosition,
+                        _curSelectedPort.Rect.center + Vector2.right * 50f,
+                        e.mousePosition + Vector2.left * 50f,
+                        Color.white,
+                        null,
+                        2f
+                    );
+                }
+                else
+                {
+                    Handles.DrawBezier(
+                        e.mousePosition,
+                        _curSelectedPort.Rect.center,
+                        e.mousePosition + Vector2.left * 50f,
+                        _curSelectedPort.Rect.center + Vector2.right * 50f,
+                        Color.white,
+                        null,
+                        2f
+                    );
+                }
+
+                GUI.changed = true;
+            }
+        }
+
+        private void DrawGrid(float spacing, float opacity)
+        {
+            var columns = Mathf.CeilToInt(position.width / spacing);
+            var rows = Mathf.CeilToInt(position.height / spacing);
+            Handles.BeginGUI();
+            Handles.color = new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp01(opacity));
+
+            var offset = new Vector3(_dragOffset.x % spacing, _dragOffset.y % spacing);
+
+            for (var i = 0; i <= columns; ++i)
+            {
+                Handles.DrawLine(
+                    new Vector3(spacing * i, -spacing) + offset,
+                    new Vector3(spacing * i, position.height + spacing) + offset
+                );
+            }
+
+            for (var i = 0; i <= rows; ++i)
+            {
+                Handles.DrawLine(
+                    new Vector3(-spacing, spacing * i, 0) + offset,
+                    new Vector3(position.width + spacing, spacing * i, 0) + offset
+                );
+            }
+
+            Handles.color = Color.white;
+            Handles.EndGUI();
         }
 
         private void ProcessRemovement()
@@ -86,7 +155,14 @@ namespace Instech.NodeEditor
                     if (e.button == 1)
                     {
                         // 鼠标右键
-                        ShowContextMenu(e.mousePosition);
+                        if (_curSelectedPort != null)
+                        {
+                            _curSelectedPort = null;
+                        }
+                        else
+                        {
+                            ShowContextMenu(e.mousePosition);
+                        }
                     }
 
                     break;
@@ -107,6 +183,8 @@ namespace Instech.NodeEditor
             {
                 item.Drag(delta);
             }
+
+            _dragOffset += delta;
 
             GUI.changed = true;
         }

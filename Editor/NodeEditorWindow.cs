@@ -11,6 +11,7 @@ namespace Instech.NodeEditor
         private readonly List<ConnectionLine> _connectionLines = new List<ConnectionLine>();
         private readonly List<ConnectionLine> _linesToRemove = new List<ConnectionLine>();
         private NodePort _curSelectedPort;
+        private bool _isDragging;
 
         [MenuItem(Strings.MenuItemOpenWindow)]
         private static void OpenWindow()
@@ -54,12 +55,14 @@ namespace Instech.NodeEditor
             {
                 _connectionLines.Remove(line);
             }
+
             _linesToRemove.Clear();
 
             foreach (var node in _nodesToRemove)
             {
                 _nodes.Remove(node);
             }
+
             _nodesToRemove.Clear();
         }
 
@@ -87,7 +90,25 @@ namespace Instech.NodeEditor
                     }
 
                     break;
+                case EventType.MouseDrag:
+                    if (e.button == 2)
+                    {
+                        // 鼠标中键
+                        OnDrag(e.delta);
+                    }
+
+                    break;
             }
+        }
+
+        private void OnDrag(Vector2 delta)
+        {
+            foreach (var item in _nodes)
+            {
+                item.Drag(delta);
+            }
+
+            GUI.changed = true;
         }
 
         private void ShowContextMenu(Vector2 pos)
